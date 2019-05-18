@@ -25,4 +25,5 @@ test-single-module: clean   ## call like this:  make test_module module=tests.<<
 	nosetests -s -v $(module) --debug=$(module)
 
 install-dev: clean
-	pip install -e .
+	pip install -r requirements_dev.txt
+	pip install -e .	

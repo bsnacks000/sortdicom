@@ -14,7 +14,6 @@ class DicomFileHandler:
         'mrn': [ (0x0010, 0x0020), ], # TODO get the other thing for utah
         'laterality': [ (0x0020, 0x0060), (0x0020, 0x0062) ], 
         'view': [ (0x0018, 0x5101) ], 
-        'type': [ (0x0008, 0x0068) ], 
         'date': [ (0x0008, 0x0022), (0x0008, 0x0020) ], 
         'sequence_info': [ (0x0008, 0x103E), (0x0008, 0x1030), ], 
         'modality': [ (0x0008, 0x0060), ], 
@@ -23,6 +22,7 @@ class DicomFileHandler:
 
     def __init__(self): 
         self.ds = None 
+        
 
     def _clean_tag(self, tag=''): 
         """ clean up the tag by replacing some whitespace and bad chars with _ or blanks
@@ -74,7 +74,7 @@ class DicomFileHandler:
         tag = '' 
         for h in hexes: 
             try: 
-                tag += self.ds[h].value
+                tag += str(self.ds[h].value)
                 break
             except KeyError as err:
                 l.warn('Could not find tag for {}... skipping this tag.'.format(h))
