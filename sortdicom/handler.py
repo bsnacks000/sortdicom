@@ -27,8 +27,8 @@ class DicomFileHandler:
     def _clean_tag(self, tag=''): 
         """ clean up the tag by replacing some whitespace and bad chars with _ or blanks
         """
-        return tag.replace(' ', '_') \
-            .replace('/','_') \
+        return tag.replace(' ', '-') \
+            .replace('/','-') \
             .replace('(','') \
             .replace(')','') \
             .replace('*', '') \

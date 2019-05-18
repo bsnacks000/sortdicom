@@ -8,7 +8,7 @@ import pathlib
 
 from .handler import DicomFileHandler 
 
-DEFAULT_TYPES = ["mrn", "laterality","view", "type", "date", "sequence_info", "modality", "instance_number"]
+DEFAULT_TYPES = ["mrn", "laterality","view", "date", "sequence_info", "modality", "instance_number"]
 
 import logging 
 l = logging.getLogger(__name__)
@@ -57,8 +57,10 @@ def _build_dicom_unique_identifier(dicom_filepath='', headers=None):
 
     uid = ''
     suffix = '.dcm'
-    for h in headers:
+    for i,h in enumerate(headers):
         uid += handler.get_dicom_header_tag(h)
+        if i < len(headers) -1:
+            uid += '_'
 
     if len(uid) == 0:
         raise BlankDicomHeaderError('No headers were found for this dicom file: {}'.format(dicom_filepath)) 
@@ -88,11 +90,14 @@ def sortdicom(patient_root_dir='', output_dir='', with_copy=True):
     # check root dir exists and construct abspath
     dicom_filepaths = get_all_dicom_filepaths(patient_root_dir) 
     copy_map = {}  # key -> original name  value -> new name 
-
+    repeat_counter = 1 
     for f in dicom_filepaths: 
         try:
             l.info('Extracting dicom header data for:    {}'.format(f))
             uid_filename = build_dicom_unique_identifier(f)
+            if uid_filename in copy_map.values():
+                uid_filename = uid_filename.replace('.dcm', '_{}.dcm'.format(repeat_counter))
+                repeat_counter += 1 
             copy_map[f] = uid_filename
         except BlankDicomHeaderError as err: 
             l.error(str(err)) 
