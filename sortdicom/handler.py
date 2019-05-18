@@ -39,6 +39,8 @@ class DicomFileHandler:
     
     def load(self, filepath=''):
         """ trys to load a dicom file given an absolute path and sets in on the instance
+        :param str filepath: The filepath to the dicom header
+        :raise: IOError if invalid path  
         """
         try: 
             self.ds = pydicom.dcmread(filepath)
@@ -48,25 +50,33 @@ class DicomFileHandler:
 
 
     def list_header_mappings(self):
-        """ return a list of the mapping key names to reference 
+        """ return a list of the mapping key names to reference
+        :return: a list of the mapping keys 
+        :rtype: list 
         """ 
         return list(self.mapping.keys())  
 
 
     def get_dicom_header_tag(self, tagname=''): 
-        """ loop through the dicom header mapping 
+        """ loop through the dicom header key and create a tag for a single key. These 
+        can be concatenated to form a unique identifier. Valid names are: "mrn", "laterality",
+        "view", "type", "date", "sequence_info", "modality", "instance_number".
+        
+        :param str tagname: A tagname key from DicomFileHandler.mapping
+        :returns: A string with the value for dicom header key.
+        :rtype: str 
         """
         tagname = tagname.lower()
         if tagname not in self.mapping.keys():
             raise ValueError('Invalid dicom mapping name. Use list_header_mappings to get key names.')
 
         hexes = self.mapping[tagname]
-        tag = None 
+        tag = '' 
         for h in hexes: 
             try: 
-                tag = self.ds[h].value
+                tag += self.ds[h].value
+                break
             except KeyError as err:
                 l.warn('Could not find tag for {}... skipping this tag.'.format(h))
-                pass 
-        if tag is not None:
-            return self._clean_tag(tag)
+                
+        return self._clean_tag(tag)
