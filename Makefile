@@ -27,3 +27,6 @@ test-single-module: clean   ## call like this:  make test_module module=tests.<<
 install-dev: clean
 	pip install -r requirements_dev.txt
 	pip install -e .	
+
+install: clean 
+	pip install . 
