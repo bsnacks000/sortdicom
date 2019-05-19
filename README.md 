@@ -9,15 +9,16 @@ A package that extracts metadata from dicom header tags using ```pydicom```, ren
 ### Install 
 -----------
 
-Install using pip from this repo after creating a virtualenv. If you're using anaconda you should 
-install ```pip``` and ```git``` first.
+Install using pip from this repo after creating a virtualenv. If you're using anaconda you should install ```pip``` and ```git``` first.
 
 ```
 $ pip install git+https://github.com/bsnacks000/sortdicom.git@v0.1.0#egg=sortdicom
 ```
+
 Replace the ```@v0.1.0``` with some other version if it exists in the repo. Available releases are tagged and listed under the github release tag.
 
 If you have ```make``` installed you can clone this repo and run:
+
 ```
 $ make install 
 ```
