@@ -1,11 +1,10 @@
 # sortdicom 
 
-| version |
+<!-- | version |
 |:-------:|
-| 0.1.0 | 
+| 0.1.0 |  -->
 
-A package that extracts metadata from dicom header tags using ```pydicom```, renames 
-the files with that metadata and copies them to a new location 
+A package that extracts metadata from dicom header tags using ```pydicom```, renames the files with that metadata and copies them to a new location 
 
 ### Install 
 -----------
@@ -25,6 +24,7 @@ $ make install
 
 ### Usage 
 --------- 
+
 There's a simple entrypoint in the processor package. An example script would simply look like this. It could be run inside a script, interpreter or jupyter notebook. 
 
 ```python
@@ -43,6 +43,7 @@ For debugging you can first run ```processor.sortdicom``` without the ```output_
 
 ### Tests
 ---------
+
 The dicom files for the tests are not kept in version control due to their size, but will be made available at a later time with instructions on how to download them if you want to run the tests for 
 development 
 
