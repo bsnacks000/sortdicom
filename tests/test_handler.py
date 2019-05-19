@@ -24,7 +24,7 @@ class TestHandler(unittest.TestCase):
     def test_dicom_file_handler_clean_tag_removes_special_chars(self): 
         
         test_string = 'HE$)(LLO/: T)H*&$*ERE'  
-        expected = 'HELLO_._THERE'
+        expected = 'HELLO-.-THERE'
         test = self.dfh._clean_tag(test_string)
         self.assertEqual(test, expected)
 
@@ -43,7 +43,7 @@ class TestHandler(unittest.TestCase):
 
     def test_dicom_list_header_mappings(self): 
 
-        expected = ['mrn', 'laterality', 'view', 'date', 'sequence_info', 'modality', 'instance_number']
+        expected = ['mrn', 'laterality', 'view', 'date', 'sequence_info', 'modality']
         mapping = self.dfh.list_header_mappings()
         
         for e in expected:
@@ -58,15 +58,13 @@ class TestHandler(unittest.TestCase):
         date = self.dfh.get_dicom_header_tag('date')
         sequence_info = self.dfh.get_dicom_header_tag('sequence_info')
         modality = self.dfh.get_dicom_header_tag('modality')
-        instance_number = self.dfh.get_dicom_header_tag('instance_number')
         
         self.assertEqual(laterality, 'L')
         self.assertEqual(mrn, 'TCGA-AO-A0JB')
         self.assertEqual(view, 'MLO')
         self.assertEqual(date, '20010607')
-        self.assertEqual(sequence_info, 'DIG_DIAG_MAMMOGR')
+        self.assertEqual(sequence_info, 'DIG-DIAG-MAMMOGR')
         self.assertEqual(modality, 'MG')
-        self.assertEqual(instance_number, '3')
 
     def test_invalid_tagname_raises_ValueError(self):
         

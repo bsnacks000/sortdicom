@@ -5,10 +5,11 @@ import os
 import sys
 import shutil 
 import pathlib
+from collections import OrderedDict
 
 from .handler import DicomFileHandler 
 
-DEFAULT_TYPES = ["mrn", "laterality","view", "date", "sequence_info", "modality", "instance_number"]
+DEFAULT_TYPES = ["mrn", "laterality","view", "date", "sequence_info", "modality"]
 
 import logging 
 l = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def _build_dicom_unique_identifier(dicom_filepath='', headers=None):
     suffix = '.dcm'
     for i,h in enumerate(headers):
         uid += handler.get_dicom_header_tag(h)
-        if i < len(headers) -1:
+        if i < len(headers) - 1 and uid != '':
             uid += '_'
 
     if len(uid) == 0:
@@ -68,44 +69,63 @@ def _build_dicom_unique_identifier(dicom_filepath='', headers=None):
     return uid + suffix
 
 
+def _label_duplicates(ordered_dict):
+    """ takes an ordered dict and sorts the key value pairs. It checks 
+    for duplicates within small groups
+    """
+    # sort the key value pairs so that duplicates line up 
+    fname_tuples = sorted(ordered_dict.items(), key=lambda x:x[1])
+    fname_lists = [list(f) for f in fname_tuples]
 
+    current_candidate_duplicate = fname_lists[0][1] # start with the first one
+    counter = 1  
+    for i, row in enumerate(fname_lists): 
+        if row[1] == current_candidate_duplicate: 
+            row[1] = row[1].replace('.dcm', '_{}.dcm'.format(counter))  # append counter 
+            counter += 1  #increment
+        else:
+            counter = 1  # reset the counter
+            current_candidate_duplicate = row[1] # set the new duplicate candidate
+            row[1] = row[1].replace('.dcm', '_{}.dcm'.format(counter)) 
+            counter += 1
+    
+    return OrderedDict(fname_lists)
 
-def sortdicom(patient_root_dir='', output_dir='', with_copy=True):
+def sortdicom(root_dir, output_dir=None):
     """ Main entrypoint for program. Given a patient_root_dir and an intended output_dir, extract dicom headers 
     from all .dcm in underlying subfolders and copy to the output_dir. 
     If with_copy is True will perform the copy to the output dir
 
-    :param str patient_root_dir: The root dir for a single patient 
-    :param str output_dir: The intended output dir. It will be created if it does not exist. 
-    :param bool with_copy: Will copy the .dcm to the output folder if set to True. (defaults to True)
-    :returns: a dictionary mapping the original filepath on the system to the new filepath 
+    :param str root_dir: The root dir for a project. Will parse .dcm from this folder down to the root and extract all into an array. 
+    :param str output_dir: The intended output dir. If set to None (default) then no copy will take place (useful for testing) 
+    :returns: a dictionary mapping the original filepath on the system to the new filepath. Useful for debugging or logging the filepath output for larger projects 
     :rtype: dict
     """
-    patient_root_dir = pathlib.Path(patient_root_dir)  # NOTE assumes input path was already checked
+    root_dir = pathlib.Path(root_dir)  # NOTE assumes input path was already checked
 
-    if not os.path.exists(output_dir):
-        l.info('Creating output dir {}'.format(output_dir))
-        os.mkdir(output_dir)
+    if output_dir:
+        if not os.path.exists(output_dir): # do not make output_dir if with_copy = False
+            l.info('Creating output dir {}'.format(output_dir))
+            os.mkdir(output_dir)
 
     # check root dir exists and construct abspath
-    dicom_filepaths = get_all_dicom_filepaths(patient_root_dir) 
-    copy_map = {}  # key -> original name  value -> new name 
+    dicom_filepaths = _get_all_dicom_filepaths(root_dir) 
+    copy_map = OrderedDict()  # key -> original name  value -> new name w/ uid 
     repeat_counter = 1 
+    
     for f in dicom_filepaths: 
         try:
             l.info('Extracting dicom header data for:    {}'.format(f))
-            uid_filename = build_dicom_unique_identifier(f)
-            if uid_filename in copy_map.values():
-                uid_filename = uid_filename.replace('.dcm', '_{}.dcm'.format(repeat_counter))
-                repeat_counter += 1 
+            uid_filename = _build_dicom_unique_identifier(f)
             copy_map[f] = uid_filename
         except BlankDicomHeaderError as err: 
             l.error(str(err)) 
-    
-    if with_copy:
+    # treat duplicates 
+    copy_map = _label_duplicates(copy_map)
+    if output_dir:
         for k,v in copy_map.items():
             l.info('Copying: {}   to   {}'.format(k, os.path.join(output_dir, v))) 
-            copy_dicom_file(k, v, output_dir)
+            _copy_dicom_file(k, v, output_dir)
     
     return copy_map 
 
