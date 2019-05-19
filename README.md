@@ -41,3 +41,8 @@ This will attempt to parse tags for any files with a .dcm extension within the r
 The ```results``` object returned by this function call contains a mapping of the original filepath to the newly mapped filename derived from the tags.
 
 For debugging you can first run ```processor.sortdicom``` without the ```output_dir``` key word argument. When this is set to ```None``` it will not copy any files. This could be useful for debugging to make sure you get the correct tags before writing to the file system.
+
+
+## Tests
+
+The tests unfortunately won't work without specific public NIH dicom files that are too big to version control. If I ever release this on pypi I will host the files somewhere for testing purposes, but for now just email me if you want the data to run the tests. The files need to be placed in specific folders I marked in the testing folder.  
