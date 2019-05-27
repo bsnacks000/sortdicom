@@ -2,7 +2,7 @@
 
 | version |
 |:-------:|
-| 0.1.0 | 
+| 0.1.1 | 
 
 A package that extracts metadata from dicom header tags using ```pydicom```, renames the files with that metadata and copies them to a new location.
 
