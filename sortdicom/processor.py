@@ -6,6 +6,7 @@ import sys
 import shutil 
 import pathlib
 from collections import OrderedDict
+from pydicom.errors import InvalidDicomError
 
 from .handler import DicomFileHandler 
 
@@ -52,6 +53,7 @@ def _build_dicom_unique_identifier(dicom_filepath='', headers=None):
     """
     handler = DicomFileHandler()
     handler.load(dicom_filepath)
+    
 
     if not headers:  # get all mappings unless headers
         headers = handler.list_header_mappings()
@@ -91,7 +93,7 @@ def _label_duplicates(ordered_dict):
     
     return OrderedDict(fname_lists)
 
-def sortdicom(root_dir, output_dir=None):
+def sortdicom(root_dir, output_dir=None, raise_on_read_error=True):
     """ Main entrypoint for program. Given a patient_root_dir and an intended output_dir, extract dicom headers 
     from all .dcm in underlying subfolders and copy to the output_dir. 
     If with_copy is True will perform the copy to the output dir
@@ -120,6 +122,12 @@ def sortdicom(root_dir, output_dir=None):
             copy_map[f] = uid_filename
         except BlankDicomHeaderError as err: 
             l.error(str(err)) 
+        except InvalidDicomError as err: 
+            l.error('You attempted to pass a non-readable filetype to pydicom.dcmread: {}'.format(f))
+            if raise_on_read_error: 
+                raise
+            l.warn('Skipping bad file... {}'.format(f))
+    
     # treat duplicates 
     copy_map = _label_duplicates(copy_map)
     if output_dir:

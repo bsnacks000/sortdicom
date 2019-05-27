@@ -15,12 +15,13 @@ class DicomFileHandler:
         'laterality': [ (0x0020, 0x0060), (0x0020, 0x0062) ], 
         'view': [ (0x0018, 0x5101) ], 
         'date': [ (0x0008, 0x0022), (0x0008, 0x0020) ], 
-        'sequence_info': [ (0x0008, 0x103E), (0x0008, 0x1030), ], 
-        'modality': [ (0x0008, 0x0060), ], 
+        # 'sequence_info': [ (0x0008, 0x103E), (0x0008, 0x1030), ],  # dropping in 0.1.1
+        # 'modality': [ (0x0008, 0x0060), ], 
     }
 
     def __init__(self): 
         self.ds = None 
+        self.filepath = None
         
 
     def _clean_tag(self, tag=''): 
@@ -43,9 +44,11 @@ class DicomFileHandler:
         """
         try: 
             self.ds = pydicom.dcmread(filepath)
+            self.filepath = filepath
         except IOError as err:
-            l.error('Invalid filepath')
+            l.error('Invalid filepath. Double check the path you entered for {}'.format(filepath))
             raise  
+        
 
 
     def list_header_mappings(self):
@@ -69,13 +72,17 @@ class DicomFileHandler:
         if tagname not in self.mapping.keys():
             raise ValueError('Invalid dicom mapping name. Use list_header_mappings to get key names.')
 
+        l.info('Now working on file: {}'.format(self.filepath))  # to help debug in terminal
         hexes = self.mapping[tagname]
         tag = '' 
         for h in hexes: 
-            try: 
-                tag += str(self.ds[h].value)
-                break
+            try:
+                val = str(self.ds[h].value)
+                if len(val) > 0:
+                    l.debug('Found tag: {} -> {}'.format(h, val))
+                    tag += val
+                    break
             except KeyError as err:
-                l.warn('Could not find tag for {}... skipping this tag.'.format(h))
+                l.warn('Could not find tag for {} -> skipping this tag.'.format(h))
                 
         return self._clean_tag(tag)

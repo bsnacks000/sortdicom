@@ -11,6 +11,7 @@ from . import DATA_DIR
 from collections import OrderedDict
 import sortdicom.processor as processor
 
+
 #_get_all_dicom_filepaths, 
 # _copy_dicom_file, 
 # _build_dicom_unique_identifier, 
@@ -49,7 +50,7 @@ class TestProcessor(unittest.TestCase):
             DATA_DIR, 'patientA', '4947-DIG DIAG MAMMOGR-94476', '000000.dcm')
 
         uid = processor._build_dicom_unique_identifier(dicomfilepath)
-        self.assertEqual(uid,'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG.dcm')
+        self.assertEqual(uid,'TCGA-AO-A0JB_L_MLO_20010607.dcm')
 
 
     def test_duplicate_labels(self): 
@@ -89,31 +90,39 @@ class TestProcessor(unittest.TestCase):
             uid = processor._build_dicom_unique_identifier()
 
 
+    @mock.patch('sortdicom.handler.DicomFileHandler.load', side_effect=pydicom.errors.InvalidDicomError)
+    def test_sortdicom_raise_on_read_allows_dicom_error(self, mock_handler):
+
+        with self.assertRaises(pydicom.errors.InvalidDicomError): 
+            result = processor.sortdicom(self.patientA_filepath)
+
+
+
     def test_sortdicom_works_on_single_patient_folder_without_copy(self): 
         #pass
         result = processor.sortdicom(self.patientA_filepath)
-        expected = ['TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm']
+        expected = ['TCGA-AO-A0JB_L_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_2.dcm']
         self.assertListEqual(list(result.values()), expected) 
     
     def test_sortdicom_writes_to_output_dir(self):
         
         processor.sortdicom(self.patientA_filepath, self.output_dir) 
         files = os.listdir(self.output_dir) 
-        expected = ['TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm']
+        expected = ['TCGA-AO-A0JB_L_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_2.dcm']
         for e in expected: 
             self.assertIn(e,files)
 
@@ -126,14 +135,14 @@ class TestProcessor(unittest.TestCase):
         processor.sortdicom(self.patientA_filepath,new_output_dir) 
 
         files = os.listdir(new_output_dir) 
-        expected = ['TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm']
+        expected = ['TCGA-AO-A0JB_L_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_2.dcm']
         for e in expected: 
             self.assertIn(e,files)
         
@@ -143,22 +152,22 @@ class TestProcessor(unittest.TestCase):
 
     def test_sortdicom_handles_multiple_patients(self):
         expected = [
-            'TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_L_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_CC_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_1.dcm',
-            'TCGA-AO-A0JB_R_MLO_20010607_DIG-DIAG-MAMMOGR_MG_2.dcm',
-            'TCGA-AO-A0JI_L_CC_20010505_DIAG-MAMMOGRAM-U_MG_1.dcm',
-            'TCGA-AO-A0JI_L_CC_20010505_DIAG-MAMMOGRAM-U_MG_2.dcm',
-            'TCGA-AO-A0JI_L_CC_20010505_DIAG-MAMMOGRAM-U_MG_3.dcm',
-            'TCGA-AO-A0JI_L_CC_20010505_DIAG-MAMMOGRAM-U_MG_4.dcm',
-            'TCGA-AO-A0JI_L_MLO_20010505_DIAG-MAMMOGRAM-U_MG_1.dcm',
-            'TCGA-AO-A0JI_L_MLO_20010505_DIAG-MAMMOGRAM-U_MG_2.dcm',
-            'TCGA-AO-A0JI_L_MLO_20010505_DIAG-MAMMOGRAM-U_MG_3.dcm',
-            'TCGA-AO-A0JI_L_MLO_20010505_DIAG-MAMMOGRAM-U_MG_4.dcm']
+            'TCGA-AO-A0JB_L_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_L_MLO_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_CC_20010607_2.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_1.dcm',
+            'TCGA-AO-A0JB_R_MLO_20010607_2.dcm',
+            'TCGA-AO-A0JI_L_CC_20010505_1.dcm',
+            'TCGA-AO-A0JI_L_CC_20010505_2.dcm',
+            'TCGA-AO-A0JI_L_CC_20010505_3.dcm',
+            'TCGA-AO-A0JI_L_CC_20010505_4.dcm',
+            'TCGA-AO-A0JI_L_MLO_20010505_1.dcm',
+            'TCGA-AO-A0JI_L_MLO_20010505_2.dcm',
+            'TCGA-AO-A0JI_L_MLO_20010505_3.dcm',
+            'TCGA-AO-A0JI_L_MLO_20010505_4.dcm']
 
         result = processor.sortdicom(DATA_DIR)
         for e in expected: 

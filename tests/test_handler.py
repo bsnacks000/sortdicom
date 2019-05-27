@@ -7,6 +7,11 @@ from sortdicom.handler import DicomFileHandler
 
 dicomfilepath = os.path.join(DATA_DIR, 'patientA', '4947-DIG DIAG MAMMOGR-94476', '000000.dcm')
 
+
+class Fake:
+    def __init__(self, value): 
+        self.value = value
+
 class TestHandler(unittest.TestCase):
 
     def setUp(self): 
@@ -31,6 +36,10 @@ class TestHandler(unittest.TestCase):
     def test_dicom_file_handler_load_correct_file(self):
         self.dfh.load(self.dicomfilepath)
         self.assertTrue(isinstance(self.dfh.ds, pydicom.dataset.FileDataset))
+    
+    def test_dicom_file_handler_load_pins_filepath(self): 
+        self.dfh.load(self.dicomfilepath)
+        self.assertIsNotNone(self.dfh.filepath)
 
     def test_dicom_load_bad_filepath_raises_IOError(self): 
         with self.assertRaises(IOError):
@@ -43,7 +52,7 @@ class TestHandler(unittest.TestCase):
 
     def test_dicom_list_header_mappings(self): 
 
-        expected = ['mrn', 'laterality', 'view', 'date', 'sequence_info', 'modality']
+        expected = ['mrn', 'laterality', 'view', 'date'] #, 'sequence_info', 'modality']
         mapping = self.dfh.list_header_mappings()
         
         for e in expected:
@@ -56,17 +65,39 @@ class TestHandler(unittest.TestCase):
         mrn = self.dfh.get_dicom_header_tag('mrn')
         view = self.dfh.get_dicom_header_tag('view')
         date = self.dfh.get_dicom_header_tag('date')
-        sequence_info = self.dfh.get_dicom_header_tag('sequence_info')
-        modality = self.dfh.get_dicom_header_tag('modality')
+        # sequence_info = self.dfh.get_dicom_header_tag('sequence_info')
+        # modality = self.dfh.get_dicom_header_tag('modality')
         
         self.assertEqual(laterality, 'L')
         self.assertEqual(mrn, 'TCGA-AO-A0JB')
         self.assertEqual(view, 'MLO')
         self.assertEqual(date, '20010607')
-        self.assertEqual(sequence_info, 'DIG-DIAG-MAMMOGR')
-        self.assertEqual(modality, 'MG')
+        # self.assertEqual(sequence_info, 'DIG-DIAG-MAMMOGR')
+        # self.assertEqual(modality, 'MG')
 
     def test_invalid_tagname_raises_ValueError(self):
         
         with self.assertRaises(ValueError):
             self.dfh.get_dicom_header_tag('blah')
+
+    
+    def test_loop_over_mapping_skips_blank(self):
+        fake_laterality_ds = {
+            (0x0020, 0x0060): Fake(''), 
+            (0x0020, 0x0062): Fake('ok')
+        }  
+        self.dfh.ds = fake_laterality_ds
+
+        res = self.dfh.get_dicom_header_tag('laterality')
+        self.assertEqual('ok', res)
+
+    
+    def test_loop_over_mapping_handles_key_error(self):
+        fake_laterality_ds = {
+            #(0x0020, 0x0060): '',  # should skip this one and go to the next one in the mapping
+            (0x0020, 0x0062): Fake('ok')
+        }
+        self.dfh.ds = fake_laterality_ds
+        res = self.dfh.get_dicom_header_tag('laterality')
+        self.assertEqual('ok', res) 
+
